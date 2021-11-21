@@ -1,4 +1,4 @@
-from automata import Automata, acceptWord, readAutomata, createAFD, printAutomata
+from automata import Automata, acceptWord, isEmpty, isFinite, readAutomata, createAFD, printAutomata, writeAutomata
 
 '''
     TRABALHO FINAL
@@ -36,7 +36,7 @@ def testWords(automata: Automata):
         accepted, path, error = acceptWord(word, automata)
 
         if accepted:
-            print(f'\nParabéns a palavra {word} pertence à ACEITA do automato inserido!')
+            print(f'\nParabéns! A palavra {word} pertence à ACEITA do automato inserido!')
             print(f'Vou te mostrar o caminho que ele percorreu:\n{path}\n')
         else:
             print(error)
@@ -49,25 +49,42 @@ def testWords(automata: Automata):
 
     return
 
+def handleProperties(automata: Automata):
+    if isEmpty(automata):
+        print(f'\nA linguagem aceita pelo autômato {automata.name} é vazia! E, por consequência, finita!\n')
+    else:
+        print(f'\nA linguagem aceita pelo autômato {automata.name} não é vazia!\n')
+        if isFinite(automata):
+            print(f'A linguagem aceita pelo autômato {automata.name} é finita!')
+        else:
+            print(f'A linguagem aceita pelo autômato {automata.name} é infinita!')
+
+    return
+
 def console():
 
     print("Olá! Meu nome é Console e serei seu ajudante! Por favor, insira o nome do arquivo onde está o AFN a ser convertido!")
     fileName = input("Nome do arquivo: ")
     AFN = handleFile(fileName)
 
-    print("\nMuito bem! Seu arquivo já está no meu sistema e estou convertendo seu AFN em um AFD!")
+    print(f"\nMuito bem! Seu arquivo já está no meu sistema e estou convertendo {AFN.name} de AFN para AFD!")
     AFD = createAFD(AFN)
 
-    print("\nTudo certo! Você quer que eu te mostre seu autômato convertido?")
+    print(f"\nTudo certo! Você quer que eu te mostre o autômato {AFD.name} convertido? Você também pode conferí-lo no arquivo 'saida.txt'")
     confirmation = input("[S]im ou [N]ão? ")
+    writeAutomata(AFD)
     if handleConfirmation(confirmation):
         printAutomata(AFD)
 
-    print("\nVocê quer que eu teste se alguma palavra pertence à ACEITA do autômato convertido?")
+    print(f"\nVocê quer que eu teste se alguma palavra pertence à ACEITA({AFD.name})?")
     confirmation = input("[S]im ou [N]ão? ")
     if handleConfirmation(confirmation):
         testWords(AFD)
 
+    # print(f"\nAgora vou verificar as propriedades de {AFD.name} quanto à linguagem vazia e finita/infinita,mas já aviso que dependendo do tramanho do autômato e do alfabeto isso pode demorar um pouco!")
+    # handleProperties(AFD)
+
     return
 
 console()
+

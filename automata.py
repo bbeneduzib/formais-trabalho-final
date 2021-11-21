@@ -1,5 +1,6 @@
 from typing import NamedTuple, List
 from collections import OrderedDict
+from itertools import product
 
 class AFTransition(NamedTuple):
     origin: str
@@ -187,7 +188,10 @@ def printAutomata(automata: Automata):
 
     print("\nCerto! Aqui está ele:\n")
     
-    finalStr = automata.final[0]
+    finalStr = ""
+
+    if len(automata.final) > 0:
+        finalStr = automata.final[0]
     if len(automata.final) > 1:
         for finalState in range(1, len(automata.final)):
             finalStr += "," + automata.final[finalState]
@@ -200,6 +204,25 @@ def printAutomata(automata: Automata):
             print(f'{transition.symbol}:{transition.destination}')
 
     print("\nLindo, não?")
+
+    return
+
+def writeAutomata(automata: Automata):
+    finalStr = ""
+
+    with open("saida.txt", 'w', encoding='utf8') as file:
+        if len(automata.final) > 0:
+            finalStr = automata.final[0]
+        if len(automata.final) > 1:
+            for finalState in range(1, len(automata.final)):
+                finalStr += "," + automata.final[finalState]
+
+        file.write(f'{automata.name}=({automata.init}, {{{finalStr}}})\n')
+    
+        for state in automata.program:
+            file.write(f'{state.state}\n')
+            for transition in state.transition:
+                file.write(f'{transition.symbol}:{transition.destination}\n')
 
     return
 
@@ -222,3 +245,44 @@ def acceptWord(word: str, automata: Automata):
         return True, path, ""
     else:
         return False, path, (f'Desculpe, a palavra {word} é rejeitada, pois para em {currState}, que não é um estado final!')
+
+def countStates(automata: Automata):
+    states = []
+    for state in automata.program:
+        states.append(state.state)
+    
+    for state in automata.final:
+        if state not in states:
+            states.append(state)
+
+    return len(states)
+
+def generateAllWords(symbols, min, max):
+    words = [""]
+    for z in range(min, max):
+        for i in product(symbols, repeat=z):
+            words.append(''.join(map(str, i)))
+    return words
+
+def isEmpty(automata: Automata):
+    stateCount = countStates(automata)
+
+    allWords = generateAllWords(automata.symbols, 1, stateCount)
+
+    for word in allWords:
+        accepted, path, error = acceptWord(word, automata)
+        if accepted:
+            break
+
+    return not accepted
+ 
+def isFinite(automata: Automata):
+    stateCount = countStates(automata)
+    allWordsGreat = generateAllWords(automata.symbols, stateCount, 2*stateCount)
+
+    for word in allWordsGreat:
+        accepted, path, error = acceptWord(word, automata)
+        if accepted:
+            break
+
+    return not accepted

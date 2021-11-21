@@ -1,0 +1,6 @@
+AUTÔMATO=(q0,{q2})
+q0
+p:q1
+q1
+g:q2
+j:q2
