@@ -15,6 +15,17 @@ class Automata(NamedTuple):
     init: str
     final: List[str]
     program: List[AFState]
+    symbols: List[str]
+
+def getSymbols(states: List[AFState]) -> List[str]:
+    symbols = []
+
+    for state in states:
+        for transition in state.transition:
+            if transition.symbol not in symbols:
+                symbols.append(transition.symbol)
+
+    return symbols
 
 def readAutomata(file_path: str) -> Automata:
     with open(file_path, 'r', encoding='utf8') as automata:
@@ -42,15 +53,18 @@ def readAutomata(file_path: str) -> Automata:
                 currState = line.strip()
                 program.append(AFState(currState, []))
         
+        symbols = getSymbols(program)
+
         # Instancia o autômato.
         return Automata(
                 name=name,
+                symbols=symbols,
                 init=init,
                 final=final,
-                program=program)
+                program=program,)
 
-def combineTransitions(automata: Automata):
-    combinedTransitions = {}
+def convertToDict(automata: Automata):
+    automataDict = {}
 
     # {(origin, symbol): [destinations]}
 
@@ -60,22 +74,12 @@ def combineTransitions(automata: Automata):
             symbol = transition.symbol
             destination = transition.destination
             
-            if (origin, symbol) in combinedTransitions:
-                combinedTransitions[(origin, symbol)].append(destination)
+            if (origin, symbol) in automataDict:
+                automataDict[(origin, symbol)].append(destination)
             else:
-                combinedTransitions[(origin, symbol)] = [destination]
+                automataDict[(origin, symbol)] = [destination]
 
-    return combinedTransitions
-
-def getSymbols(automata: Automata) -> List[str]:
-    symbols = []
-
-    for state in automata.program:
-        for transition in state.transition:
-            if transition.symbol not in symbols:
-                symbols.append(transition.symbol)
-
-    return symbols
+    return automataDict
 
 def handleTransitions(q, afd_symbols, nfa_transitions):
     afd_transitions = {}
@@ -123,13 +127,13 @@ def handleFinalStates(q, automata):
     return afd_final
 
 def AFNConversion(automata: Automata):
-    afd_symbols = getSymbols(automata)
+    afd_symbols = getSymbols(automata.program)
     afd_init = automata.init
     
     q = []
     q.append((afd_init,))
 
-    nfa_transitions = combineTransitions(automata)
+    nfa_transitions = convertToDict(automata)
     afd_program, q = handleTransitions(q, afd_symbols, nfa_transitions)
     afd_final = handleFinalStates(q, automata)
 
@@ -143,6 +147,7 @@ def AFNConversion(automata: Automata):
 
 def createAFD(automata: Automata):
     name = automata.name
+    symbols = automata.symbols
     
     afd_dict = AFNConversion(automata)
 
@@ -172,12 +177,16 @@ def createAFD(automata: Automata):
 
     return Automata(
         name = name,
+        symbols=symbols,
         init = init,
         final = final,
         program = program,
     )
 
 def printAutomata(automata: Automata):
+
+    print("\nCerto! Aqui está ele:\n")
+    
     finalStr = automata.final[0]
     if len(automata.final) > 1:
         for finalState in range(1, len(automata.final)):
@@ -190,4 +199,26 @@ def printAutomata(automata: Automata):
         for transition in state.transition:
             print(f'{transition.symbol}:{transition.destination}')
 
+    print("\nLindo, não?")
+
     return
+
+# Retorna bool (diz se foi aceita), lista de transições percorrida, mensagem de erro
+def acceptWord(word: str, automata: Automata):
+
+    currState = automata.init
+    automataDict = convertToDict(automata)
+    path = []
+
+    for letter in word:
+        if (currState, letter) in automataDict:
+            nextState = automataDict[(currState, letter)][0]
+            path.append(f"({currState}, {letter}) -> {nextState}")
+            currState = nextState
+        else:
+            return False, path, (f'Desculpe, a palavra {word} é rejeitada por indefinição, pois não há transição para {letter} no estado {currState}!')
+    
+    if currState in automata.final:
+        return True, path, ""
+    else:
+        return False, path, (f'Desculpe, a palavra {word} é rejeitada, pois para em {currState}, que não é um estado final!')
