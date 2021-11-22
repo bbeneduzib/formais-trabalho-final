@@ -2,15 +2,41 @@ from typing import NamedTuple, List
 from collections import OrderedDict
 from itertools import product
 
+'''
+    TRABALHO FINAL
+    LINGUAGENS FORMAIS E AUTÔMATOS - 2021/1
+
+    Bernardo Beneduzi Borba
+'''
+
+#-----------------------------------------------------------------
+# Objeto que guarda uma transição do autômato. 
+# origin é o estado atual; 
+# symbol é o símbolo lido; 
+# destination é o estado destino para aquele símbolo no estado atual.
+#-----------------------------------------------------------------
 class AFTransition(NamedTuple):
     origin: str
     symbol: str
     destination: str
 
+#-----------------------------------------------------------------
+# Objeto que guarda um estado do autômato. 
+# state é o nome do estado; 
+# transition é ums lista com todas as transições daquele estado.
+#-----------------------------------------------------------------
 class AFState(NamedTuple):
     state: str
     transition: List[AFTransition]
 
+#-----------------------------------------------------------------
+# Objeto que guarda o autômato. 
+# name é o nome do autômato; 
+# init é o nome do estado inicial; 
+# final é a lista com os nomes dos estados finais; 
+# program é a lista com todos os estados; 
+# symbols é a lista com o alfabeto da linguagem.
+#-----------------------------------------------------------------
 class Automata(NamedTuple):
     name: str
     init: str
@@ -18,6 +44,10 @@ class Automata(NamedTuple):
     program: List[AFState]
     symbols: List[str]
 
+#-----------------------------------------------------------------
+# Dada uma lista de estados, retorna uma lista com todos os 
+# simbolos presentes neles.
+#-----------------------------------------------------------------
 def getSymbols(states: List[AFState]) -> List[str]:
     symbols = []
 
@@ -28,6 +58,10 @@ def getSymbols(states: List[AFState]) -> List[str]:
 
     return symbols
 
+#-----------------------------------------------------------------
+# Função que lê o arquivo no formato estabelecido pelo enunciado 
+# do trabalho e guarda as informações no objeto Automata
+#-----------------------------------------------------------------
 def readAutomata(file_path: str) -> Automata:
     with open(file_path, 'r', encoding='utf8') as automata:
         header = automata.readline().strip().split("=")
@@ -64,6 +98,12 @@ def readAutomata(file_path: str) -> Automata:
                 final=final,
                 program=program,)
 
+#-----------------------------------------------------------------
+# Converte a função programa dos autômatos em um dicionário no 
+# formato: 
+# key = (estado atual, símbolo lido) 
+# value = lista de estados destinos para aquele símbolo no estado atual.
+#-----------------------------------------------------------------
 def convertToDict(automata: Automata):
     automataDict = {}
 
@@ -82,13 +122,18 @@ def convertToDict(automata: Automata):
 
     return automataDict
 
-def handleTransitions(q, afd_symbols, nfa_transitions):
+#-----------------------------------------------------------------
+# Converte as transições do AFN em transições AFD. Quando um mesmo 
+# símbolo possui múltiplos estados de destino, une esses estados e 
+# acrescenta o estado unido na lista de estados do AFD.
+#-----------------------------------------------------------------
+def handleTransitions(q, afd_symbols, afn_transitions):
     afd_transitions = {}
     afd_program = []
     for in_state in q:
         for symbol in afd_symbols:
-            if len(in_state) == 1 and (in_state[0], symbol) in nfa_transitions:
-                afd_transitions[(in_state, symbol)] = nfa_transitions[(in_state[0], symbol)]
+            if len(in_state) == 1 and (in_state[0], symbol) in afn_transitions:
+                afd_transitions[(in_state, symbol)] = afn_transitions[(in_state[0], symbol)]
 
                 if tuple(afd_transitions[(in_state, symbol)]) not in q:
                     q.append(tuple(afd_transitions[(in_state, symbol)]))
@@ -97,8 +142,8 @@ def handleTransitions(q, afd_symbols, nfa_transitions):
                 f_dest =[]
 
                 for n_state in in_state:
-                    if (n_state, symbol) in nfa_transitions and nfa_transitions[(n_state, symbol)] not in dest:
-                        dest.append(nfa_transitions[(n_state, symbol)])
+                    if (n_state, symbol) in afn_transitions and afn_transitions[(n_state, symbol)] not in dest:
+                        dest.append(afn_transitions[(n_state, symbol)])
                 
                 if dest:
                     for d in dest:
@@ -117,6 +162,10 @@ def handleTransitions(q, afd_symbols, nfa_transitions):
 
     return afd_program, q
 
+#-----------------------------------------------------------------
+# Gera os estados finais do AFD verificando quais de seus estados
+# foram gerados a partir de algum estado final do AFN
+#-----------------------------------------------------------------
 def handleFinalStates(q, automata):
     afd_final = []
 
@@ -127,6 +176,13 @@ def handleFinalStates(q, automata):
     
     return afd_final
 
+#-----------------------------------------------------------------
+# Faz a conversão de AFN para AFD conforme o algoritmo visto em 
+# aula, primeiro "replica" o estado inicial e então, gera todas 
+# as combinações, sem repetições, dos estados do AFN. Por fim, 
+# gera os estados finais. Retorna o AFD como um dicionário para 
+# facilitar a inserção no objeto Automata.
+#-----------------------------------------------------------------
 def AFNConversion(automata: Automata):
     afd_symbols = getSymbols(automata.program)
     afd_init = automata.init
@@ -134,8 +190,8 @@ def AFNConversion(automata: Automata):
     q = []
     q.append((afd_init,))
 
-    nfa_transitions = convertToDict(automata)
-    afd_program, q = handleTransitions(q, afd_symbols, nfa_transitions)
+    afn_transitions = convertToDict(automata)
+    afd_program, q = handleTransitions(q, afd_symbols, afn_transitions)
     afd_final = handleFinalStates(q, automata)
 
     afd = OrderedDict()
@@ -146,6 +202,9 @@ def AFNConversion(automata: Automata):
 
     return afd
 
+#-----------------------------------------------------------------
+# Faz a inserção do automato convertido na estrutura Automata
+#-----------------------------------------------------------------
 def createAFD(automata: Automata):
     name = automata.name
     symbols = automata.symbols
@@ -184,6 +243,10 @@ def createAFD(automata: Automata):
         program = program,
     )
 
+#-----------------------------------------------------------------
+# Printa o autômato convertido no formato estabelecido pelo 
+# enunciado do trabalho
+#-----------------------------------------------------------------
 def printAutomata(automata: Automata):
 
     print("\nCerto! Aqui está ele:\n")
@@ -207,6 +270,10 @@ def printAutomata(automata: Automata):
 
     return
 
+#-----------------------------------------------------------------
+# Escreve no arquivo de saída o autômato convertido no formato 
+# estabelecido pelo enunciado do trabalho
+#-----------------------------------------------------------------
 def writeAutomata(automata: Automata):
     finalStr = ""
 
@@ -226,6 +293,13 @@ def writeAutomata(automata: Automata):
 
     return
 
+#-----------------------------------------------------------------
+# Converte a função programa para um dicionário no formato já 
+# visto e percorre o autômato, guardando seu caminho e verificando 
+# se a palavra inserida pertence à ACEITA ou não. Retorna um 
+# booleano dizendo se aceita ou não, o caminho percorrido e a 
+# mensagem de erro detalhando o motivo da palavra não ser aceita.
+#-----------------------------------------------------------------
 # Retorna bool (diz se foi aceita), lista de transições percorrida, mensagem de erro
 def acceptWord(word: str, automata: Automata):
 
@@ -246,6 +320,9 @@ def acceptWord(word: str, automata: Automata):
     else:
         return False, path, (f'Desculpe, a palavra {word} é rejeitada, pois para em {currState}, que não é um estado final!')
 
+#-----------------------------------------------------------------
+# Conta quantos estados há no autômato.
+#-----------------------------------------------------------------
 def countStates(automata: Automata):
     states = []
     for state in automata.program:
@@ -257,6 +334,10 @@ def countStates(automata: Automata):
 
     return len(states)
 
+#-----------------------------------------------------------------
+# Gera todas as palavras possíveis de tamanho entre min e max-1 
+# de um alfabeto. Sempre adiciona a palavra vazia.
+#-----------------------------------------------------------------
 def generateAllWords(symbols, min, max):
     words = [""]
     for z in range(min, max):
@@ -264,6 +345,11 @@ def generateAllWords(symbols, min, max):
             words.append(''.join(map(str, i)))
     return words
 
+#-----------------------------------------------------------------
+# Verifica se a linguagem aceita por um autômato é vazia, testando 
+# todas as palavras possíveis de tamanho menor que o número de 
+# estados.
+#-----------------------------------------------------------------
 def isEmpty(automata: Automata):
     stateCount = countStates(automata)
 
@@ -276,9 +362,17 @@ def isEmpty(automata: Automata):
 
     return not accepted
  
+#-----------------------------------------------------------------
+# Verifica se a linguagem aceita por um autômato é finita, testando 
+# todas as palavras possíveis de tamanho maior ou igual que o número 
+# de estados e menor que o dobro do número de estados
+#-----------------------------------------------------------------
 def isFinite(automata: Automata):
     stateCount = countStates(automata)
     allWordsGreat = generateAllWords(automata.symbols, stateCount, 2*stateCount)
+    
+    if "" in allWordsGreat:
+        allWordsGreat.remove("")
 
     for word in allWordsGreat:
         accepted, path, error = acceptWord(word, automata)

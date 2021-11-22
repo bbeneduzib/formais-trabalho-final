@@ -7,6 +7,11 @@ from automata import Automata, acceptWord, isEmpty, isFinite, readAutomata, crea
     Bernardo Beneduzi Borba
 '''
 
+#-----------------------------------------------------------------
+# Tenta abrir e ler o arquivo com o automato, se não encontrar
+# o arquivo ou se houver algum erro de leitura, prende o unsuário
+# até que insira um arquivo válido
+#-----------------------------------------------------------------
 def handleFile(fileName):
     while True:
         if not ".txt" in fileName:
@@ -21,6 +26,10 @@ def handleFile(fileName):
 
     return AFN
 
+#-----------------------------------------------------------------
+# Verifica se o usuário digitou "s" ou "sim" e retorna verdadeiro
+# para ambos os casos, falso para qualquer outra digitação
+#-----------------------------------------------------------------
 def handleConfirmation(confirmation: str):
     if confirmation.upper() == "S":
         return True
@@ -28,7 +37,11 @@ def handleConfirmation(confirmation: str):
         return True
     return False
 
-
+#-----------------------------------------------------------------
+# Coloca o usuário em um loop onde ele pode testar quantas 
+# palavras quiser. Mostra o resultado dizendo se aceita ou não,
+# mostrando o caminho percorrido no autômato
+#-----------------------------------------------------------------
 def testWords(automata: Automata):
     while True:
         print("\nCerto! Diga-me qual palavra você quer testar!")
@@ -49,6 +62,10 @@ def testWords(automata: Automata):
 
     return
 
+#-----------------------------------------------------------------
+# Chama as funções que verificam as propriedades do autômato e
+# exibe o resultado.
+#-----------------------------------------------------------------
 def handleProperties(automata: Automata):
     if isEmpty(automata):
         print(f'\nA linguagem aceita pelo autômato {automata.name} é vazia! E, por consequência, finita!\n')
@@ -61,6 +78,17 @@ def handleProperties(automata: Automata):
 
     return
 
+#-----------------------------------------------------------------
+# Função que é rodada ao chamar o arquivo. Faz as interações 
+# principais com o usuário. Pega o nome do arquivo, converte o 
+# autômato inserido em AFD, escreve o arquivo de saída e printa o 
+# AFD na tela, caso o usuário deseje. Chama as funções de testes de 
+# palavra e de propriedades. 
+#
+# OBS: os testes de propriedades estão comentados, pois autômatos 
+# muito complexos demoram muito para serem verificados. Para 
+# realizar esses testes, descomentar.
+#-----------------------------------------------------------------
 def console():
 
     print("Olá! Meu nome é Console e serei seu ajudante! Por favor, insira o nome do arquivo onde está o AFN a ser convertido!")
@@ -86,5 +114,6 @@ def console():
 
     return
 
+# Chamada da função principal
 console()
 
